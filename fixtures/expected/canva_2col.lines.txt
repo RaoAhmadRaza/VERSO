@@ -1,0 +1,52 @@
+JANE MORGAN
+Senior Backend Engineer
+SUMMARY
+Senior backend engineer with eight years on payment systems.
+EXPERIENCE
+Senior Engineer
+Acme Corp - San Francisco, CA
+Jan 2021 - Present
+Built the billing pipeline handling 4M events per day.
+Cut p99 latency from 800ms to 120ms.
+Led the migration from monolith to six services.
+Software Engineer
+Globex Inc - Remote
+Jun 2018 - Dec 2020
+Shipped the customer portal used by 30k accounts.
+Reduced onboarding from three days to four hours.
+Junior Developer
+Initech - Austin, TX
+Sep 2016 - May 2018
+Maintained the reporting service.
+Wrote the regression suite still in use today.
+PROJECTS
+ledger-py -- an open-source double-entry ledger.
+1.2k stars, used by four payment startups.
+CONTACT
+jane.morgan
+@example.com
++1 415 555 0199
+San Francisco, CA
+SKILLS
+Python
+Go
+PostgreSQL
+Kubernetes
+AWS
+Terraform
+Kafka
+Redis
+gRPC
+EDUCATION
+BSc Computer Science
+University of
+Bristol
+2014 - 2018
+GPA 3.8/4.0
+CERTIFICATIONS
+AWS Solutions
+Architect, 2022
+CKA, 2021
+LANGUAGES
+English (native)
+Spanish (fluent)
