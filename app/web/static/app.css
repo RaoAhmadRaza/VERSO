@@ -1,0 +1,305 @@
+/* VERSO — PLAN.md §8.
+   The gutter is the one bold element. Everything else stays quiet: no gradients,
+   no card shadows, no icon set beyond what is functional. */
+
+:root {
+  --ink:        #14171A;
+  --paper:      #FFFFFF;
+  --chrome:     #EDF0F0;
+  --rule:       #D3DAD9;
+  --claimed:    #9AA5A4;
+  --unassigned: #E0A82E;
+  --unassigned-wash: #FDF3DE;
+  --flag:       #B02E6B;
+  --flag-wash:  #FBEEF4;
+  --accent:     #14595C;
+  --muted:      #6B7676;
+
+  --display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --bar-h: 2px;
+  --gutter-w: 12px;
+}
+
+* { box-sizing: border-box; }
+
+/* The `hidden` attribute lives in the UA stylesheet at element specificity, so any class
+   that sets `display` silently outranks it -- `.dropzone { display: flex }` kept the
+   dropzone on screen through the whole upload. Restate it as a winning rule. */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--chrome);
+  color: var(--ink);
+  font-family: var(--ui);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.display { font-family: var(--display); font-weight: 600; letter-spacing: -0.01em; }
+.mono { font-family: var(--mono); }
+
+/* ------------------------------------------------------------------ chrome */
+
+.chrome-bar {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  padding: 12px 20px; border-bottom: 1px solid var(--rule); background: var(--paper);
+}
+.wordmark { font-family: var(--display); font-size: 17px; letter-spacing: 0.08em; }
+.file-meta { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+
+/* ------------------------------------------------------- empty / processing */
+
+.stage { max-width: 620px; margin: 0 auto; padding: 12vh 24px; }
+
+.dropzone {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 14px; padding: 56px 32px; background: var(--paper);
+  border: 1.5px dashed var(--rule); border-radius: 4px;
+  transition: border-color .12s ease, background .12s ease;
+}
+.dropzone.over { border-color: var(--accent); background: #F7FAFA; }
+.dropzone h1 { font-size: 30px; margin: 0; }
+.lede { margin: 0; color: var(--muted); }
+.fineprint { margin: 6px 0 0; color: var(--muted); font-size: 12px; max-width: 42ch; }
+
+.pick span {
+  display: inline-block; padding: 9px 18px; border-radius: 3px;
+  background: var(--accent); color: #fff; cursor: pointer; font-weight: 500;
+}
+
+.processing { padding: 32px 0; }
+.parsing-file { margin: 0 0 14px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+.parsing-file span + span::before { content: " · "; }
+
+.track { height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.fill {
+  height: 100%; width: 0; background: var(--accent); border-radius: 2px;
+  transition: width .4s linear;
+}
+.fill.overrun { background: var(--unassigned); }
+
+.clock {
+  display: flex; align-items: baseline; gap: 8px;
+  margin: 8px 0 18px; font-size: 12px; color: var(--muted);
+}
+.clock-sep { flex: 0 0 auto; }
+#remaining { margin-left: auto; }
+
+.fact {
+  margin: 18px 0 0; padding: 12px 14px; min-height: 3.2em;
+  background: var(--paper); border-left: 2px solid var(--accent);
+  font-size: 13px; color: var(--ink);
+  opacity: 0; transition: opacity .35s ease;
+}
+.fact.shown { opacity: 1; }
+.stages { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.stages li {
+  padding: 12px 16px; background: var(--paper); border: 1px solid var(--rule);
+  border-radius: 3px; color: var(--muted); font-family: var(--mono); font-size: 13px;
+}
+.stages li::before { content: "○  "; }
+.stages li.active { color: var(--ink); border-color: var(--accent); }
+.stages li.active::before { content: "◐  "; }
+.stages li.done { color: var(--ink); }
+.stages li.done::before { content: "●  "; color: var(--accent); }
+
+.failure {
+  padding: 24px; background: var(--flag-wash);
+  border: 1px solid var(--flag); border-radius: 3px;
+}
+.failure h2 { margin: 0 0 6px; font-family: var(--display); font-size: 19px; }
+.failure p { margin: 0 0 14px; }
+.failure button {
+  padding: 8px 16px; border: 1px solid var(--flag); border-radius: 3px;
+  background: transparent; color: var(--flag); cursor: pointer; font: inherit;
+}
+
+/* -------------------------------------------------------------- scoreboard */
+
+.scoreboard {
+  display: flex; align-items: baseline; gap: 32px; flex-wrap: wrap;
+  padding: 16px 20px; background: var(--paper); border-bottom: 1px solid var(--rule);
+}
+.score { display: flex; align-items: baseline; gap: 8px; }
+.coverage-number { font-size: 34px; line-height: 1; }
+.score-value { font-family: var(--mono); font-size: 17px; }
+.score-value.warn { color: var(--unassigned); }
+.score-value.flag { color: var(--flag); }
+.score-label { color: var(--muted); font-size: 12px; text-transform: lowercase; }
+.reset { margin-left: auto; color: var(--accent); font-size: 13px; }
+
+.warnings { margin: 0; padding: 10px 20px; list-style: none;
+  background: var(--unassigned-wash); border-bottom: 1px solid var(--rule); font-size: 13px; }
+.warnings strong { font-family: var(--mono); font-weight: 500; }
+
+/* ------------------------------------------------------------- proof sheet */
+
+.sheet {
+  display: grid; grid-template-columns: minmax(380px, 5fr) minmax(360px, 4fr);
+  height: calc(100vh - 106px);
+}
+.pane { overflow-y: auto; background: var(--paper); }
+.source-pane { display: grid; grid-template-columns: var(--gutter-w) 1fr;
+  align-items: start; border-right: 1px solid var(--rule); }
+
+/* the signature element — a proportional minimap of the whole document.
+
+   PLAN.md §8 asks for a 12px strip running the full height of the left pane with one 2px
+   bar per line. Those two constraints only agree for a document of exactly the pane's
+   height in lines: 23 bars at 2px is a 70px stub in the corner, which reads as broken
+   rather than as a summary. So 2px is the floor and bars share the pane height evenly —
+   the strip always spans the pane, bar N always sits at line N's relative position, and a
+   long resume converges on the 2px the plan describes. */
+.gutter {
+  position: sticky; top: 0; align-self: stretch;
+  height: calc(100vh - 106px);
+  display: flex; flex-direction: column; gap: 1px; padding: 10px 3px;
+  background: var(--chrome); border-right: 1px solid var(--rule);
+}
+.bar {
+  display: block; width: 100%; flex: 1 1 0; min-height: 2px;
+  border-radius: 1px; cursor: pointer;
+  transition: transform .1s ease, opacity .1s ease;
+}
+.bar.claimed { background: var(--claimed); opacity: .5; }
+.bar.unassigned { background: var(--unassigned); }
+.bar.flag { background: var(--flag); }
+.bar:hover, .bar.pulse { opacity: 1; transform: scaleX(2.2); }
+
+.source { margin: 0; padding: 12px 0; list-style: none; font-family: var(--mono); font-size: 12.5px; }
+.src-line { display: flex; gap: 12px; padding: 1px 14px 1px 10px; scroll-margin-top: 40px; }
+.src-line.lit { background: var(--unassigned-wash); }
+.lineno { color: var(--claimed); user-select: none; flex: 0 0 auto; }
+.linetext { white-space: pre-wrap; overflow-wrap: anywhere; }
+.linetext.bullet::before { content: "· "; color: var(--claimed); }
+.linetext.hidden-text { text-decoration: underline dotted var(--flag); }
+.tags { margin-left: auto; display: flex; gap: 4px; }
+.tags i { font-style: normal; font-size: 9px; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--muted); border: 1px solid var(--rule);
+  border-radius: 2px; padding: 0 3px; align-self: center; }
+
+/* ------------------------------------------------------------- parse pane */
+
+.parse-pane { padding: 12px 20px 60px; }
+.section { border-bottom: 1px solid var(--rule); padding: 14px 0; }
+.section:last-child { border-bottom: 0; }
+.section h2 {
+  margin: 0 0 8px; font-size: 11px; font-weight: 600; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--muted);
+}
+.count { color: var(--unassigned); font-family: var(--mono); letter-spacing: 0; }
+.section-note { margin: -4px 0 10px; font-size: 12px; color: var(--muted); }
+.unassigned-block { background: var(--unassigned-wash); margin: 0 -20px; padding: 14px 20px; }
+
+.item { margin-bottom: 12px; }
+.item h3 { margin: 0 0 4px; font-size: 14.5px; font-weight: 600; }
+.item h3 .subtitle { font-weight: 400; color: var(--muted); margin-left: 8px; }
+
+.row { display: flex; gap: 10px; align-items: baseline; padding: 2px 4px; border-radius: 2px; }
+.row[data-lines]:hover, .row.lit { background: #F2F5F5; }
+.row-label { flex: 0 0 92px; color: var(--muted); font-size: 12px; }
+.row-value { flex: 1 1 auto; overflow-wrap: anywhere; }
+.row.flagged { background: var(--flag-wash); }
+.row-flag { font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--flag); border: 1px solid var(--flag); border-radius: 2px; padding: 0 4px; }
+.cite { flex: 0 0 auto; color: var(--claimed); font-size: 11px; }
+
+h3[data-lines] { cursor: default; }
+h3.lit { background: #F2F5F5; }
+
+@media (max-width: 900px) {
+  .sheet { grid-template-columns: 1fr; height: auto; }
+  .pane { max-height: 70vh; }
+}
+
+/* ------------------------------------------------------------------ profile view */
+/* The rail is chrome: quiet, fixed, and honest about what is not built. */
+.rail { position: fixed; top: 0; left: 0; bottom: 0; width: 86px; background: var(--paper);
+  border-right: 1px solid var(--rule); display: flex; flex-direction: column; gap: 2px;
+  padding: 14px 8px; z-index: 5; }
+.rail-mark { font-family: var(--display); font-size: 22px; color: var(--accent);
+  text-align: center; padding: 4px 0 14px; }
+.rail-item { font-size: 11px; text-align: center; padding: 9px 4px; border-radius: 8px;
+  color: var(--ink); text-decoration: none; }
+.rail-item:hover { background: var(--chrome); }
+.rail-item.active { background: var(--chrome); font-weight: 600; color: var(--accent); }
+.rail-item.disabled { color: #AEB6B5; cursor: not-allowed; }
+.rail-item.disabled:hover { background: none; }
+.shell { margin-left: 86px; }
+
+.notice { background: var(--chrome); border-bottom: 1px solid var(--rule);
+  padding: 10px 28px; font-size: 13px; }
+
+.profile { max-width: 1000px; margin: 0 auto; padding: 26px 28px 60px; }
+.tabs { display: flex; gap: 26px; border-bottom: 1px solid var(--rule); margin-bottom: 26px; }
+.tab { background: none; border: 0; padding: 12px 0; font: inherit; font-size: 15px;
+  color: #7C8785; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--ink); }
+.panel { display: none; }
+.panel.active { display: block; }
+.panel h2 { font-size: 20px; margin: 0 0 18px; }
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; }
+.edit { font-size: 13px; color: var(--accent); }
+
+.name { font-size: 40px; margin: 0 0 16px; }
+.low-confidence { color: var(--unassigned); font-size: 13px; margin: -8px 0 14px; }
+.summary { max-width: 70ch; margin-top: 18px; line-height: 1.6; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips.contact { margin-bottom: 6px; }
+.chip { background: var(--chrome); border-radius: 999px; padding: 7px 14px; font-size: 13px; }
+.chip.muted { color: #7C8785; }
+.skill-group { font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
+  color: #7C8785; margin: 20px 0 10px; }
+
+/* Timeline entries. depth-1 is a C6 promotion, indented under its employer. */
+.entry { border-left: 2px solid var(--accent); padding: 0 0 22px 18px; margin-left: 6px; }
+.entry.depth-1 { margin-left: 30px; border-left-color: var(--rule); }
+.entry .when { color: #7C8785; font-size: 13px; margin: 0 0 4px; }
+.entry .arrow { color: #AEB6B5; }
+.entry h3 { font-size: 17px; margin: 0 0 2px; }
+.entry-sub { margin: 0; color: #4A5453; }
+.entry-detail { margin: 2px 0 0; color: #7C8785; font-size: 13px; }
+.entry-bullets { margin: 10px 0 0; padding-left: 18px; line-height: 1.6; }
+.entry-bullets li { margin-bottom: 6px; }
+.empty-note { color: #7C8785; font-style: italic; }
+
+.eeo-row { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center;
+  padding: 13px 0; border-bottom: 1px solid var(--rule); }
+.proof-link { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--rule); }
+.proof-link a { color: var(--accent); font-size: 14px; }
+
+.eeo-form-wrap { align-items: flex-start; }
+.eeo-form { max-width: 720px; margin: 0 auto; padding: 30px 0 60px; }
+.eeo-field { border: 0; border-top: 1px solid var(--rule); margin: 0; padding: 18px 0 6px; }
+.eeo-field legend { font-weight: 600; padding: 0; margin-bottom: 10px; }
+.opt { display: inline-flex; align-items: center; gap: 7px; margin: 0 16px 9px 0;
+  font-size: 14px; cursor: pointer; }
+.submit { margin-top: 24px; background: var(--accent); color: #fff; border: 0;
+  border-radius: 8px; padding: 12px 22px; font: inherit; font-size: 15px; cursor: pointer; }
+
+/* --------------------------------------------------------------- profile editing */
+/* An edited field is marked in accent teal, deliberately NOT amber or magenta -- those
+   already mean "unassigned" and "hallucinated", and a correct human edit is neither. */
+.value.edited { border-bottom: 1px dashed var(--accent); }
+.edit-input { display: none; font: inherit; font-size: inherit; width: 100%; max-width: 46ch;
+  padding: 4px 7px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.panel.editing .value { display: none; }
+.panel.editing .edit-input { display: inline-block; }
+.edit-toggle { background: none; border: 1px solid var(--rule); border-radius: 6px;
+  padding: 5px 12px; font: inherit; font-size: 13px; cursor: pointer; color: var(--accent); }
+.edit-toggle:hover { background: var(--chrome); }
+.save { display: none; }
+.panel.editing .save { display: inline-block; }
+.field-row { display: flex; align-items: baseline; gap: 12px; margin: 0 0 10px; }
+.field-label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #7C8785; }
+
+.profile-actions { margin-top: 30px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.update-resume { background: var(--accent); color: #fff; border-radius: 8px;
+  padding: 9px 18px; font-size: 14px; text-decoration: none; }
+.profile-actions .hint { color: #7C8785; font-size: 13px; }
+.back-link { display: inline-block; margin-top: 14px; color: var(--accent); font-size: 14px; }
