@@ -148,9 +148,10 @@ GET  /api/lines/{sha}    debug: raw numbered lines
 GET  /                   dashboard
 ```
 
-Since expanded to eight, when the profile became the landing view: `/upload` (dropzone),
-`/proof` (the proof sheet), `GET`+`POST /eeo` (equal-employment questions) and
-`POST /profile/edit`. Still nothing that a page cannot do. Resist adding more.
+Since expanded to twelve. The profile view added `/upload` (dropzone), `/proof` (the proof
+sheet), `GET`+`POST /eeo` and `POST /profile/edit`; multi-profile added
+`POST /people/create|switch|delete`. `/proof` and the two `/api/*/{sha}` routes address a
+parse directly by sha and stay person-agnostic. Still nothing a page cannot do. Resist more.
 
 ---
 
@@ -409,6 +410,17 @@ allowed to disagree — that disagreement is what "edited" means, so an edited f
 | P25 | Resume updated | — | The old parse keeps its own edits and stays viewable by its own sha. An update is not a deletion |
 | P26 | Path survived but the new resume changed that field | `old_values[path] != new_values[path]` | Edit dropped — a correction about text that no longer exists would hide the new document's real content. The newer document wins |
 | P27 | A route omits `has_profile`, or a stale server process leaves it undefined | Jinja undefined is falsy | The rail also accepts `sha` as proof a profile exists, so an undefined flag cannot silently show "Resume" on the profile page |
+| P28 | Legacy `data/profile.json` with people/ empty | File exists, people/ empty | Migrate to `people/default/` carrying eeo, active_sha and overrides verbatim; display name "Me" |
+| P29 | Migration runs again | people/ non-empty, or legacy already renamed | No-op by construction, not by bookkeeping |
+| P30 | Legacy file corrupt, or the new one will not reload | Validation or round-trip fails | Legacy left byte-for-byte; nothing half-written; renamed to `.migrated` only after the new file reloads |
+| P31 | `person_id` from user input becomes a filesystem path | Whitelist `[a-z0-9]+(-[a-z0-9]+)*` + `resolve()` containment | Refused, not rewritten. Also closes unicode homoglyphs and case collisions on case-insensitive filesystems. Validated on reads as well as writes |
+| P32 | Two people with the same display name | Slug already taken | `ali`, `ali-2`, `ali-3`. Display names kept verbatim. A name with no usable characters is refused |
+| P33 | A person is deleted | — | `people/<id>` only. `data/uploads|lines|parses` are shared and sha-keyed, so they are never touched. Parses nobody references are counted and reported, never removed |
+| P34 | The deleted person was the active one | Pointer names a missing folder | Pointer clears; the landing page stays 200 |
+| P35 | Two people, same resume, different edits | — | Overrides and answers are per folder; neither appears in the other's file |
+| P36 | `?person=` names someone unknown or unusable | `person_exists` false | 404 on every person-aware route. Never a fallback -- showing one person's resume when the URL named another is the worst failure available |
+| P37 | Zero people | `list_people()` empty | The create-person screen, not the dropzone. A resume needs somewhere to go before it is uploaded |
+| P38 | `people/x/profile.json` corrupt | Parse or validation fails | Reads as an empty profile, left untouched on disk |
 
 ---
 

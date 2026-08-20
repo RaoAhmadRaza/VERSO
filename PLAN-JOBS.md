@@ -396,5 +396,12 @@ apply links is most of the value at a fraction of the risk.
 **Sensitive data for other people.** The Equal Employment tab holds race, gender, sexual
 orientation, disability and veteran status. Nothing in fetching, filtering, or scoring reads
 any of it. For four other people it is the most sensitive data in the app sitting in a plain
-file on a laptop. Drop it from the profile schema for anyone who isn't you, and collect it
-at the point of use — if that point ever arrives.
+file on a laptop.
+
+> **Amended 2026-08-20.** Multi-profile stores EEO answers per person, in
+> `people/{id}/profile.json` — every person, not just the owner. This was decided
+> deliberately against the paragraph above, which originally said to drop it from the schema
+> for anyone who isn't you. The mitigation stands rather than the omission: `people/` is
+> gitignored, answers are optional and every question is declinable, and nothing in Feature 2
+> reads the block. If that ever stops being true, revisit this before shipping the feature
+> that reads it.

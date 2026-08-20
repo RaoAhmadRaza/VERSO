@@ -303,3 +303,27 @@ h3.lit { background: #F2F5F5; }
   padding: 9px 18px; font-size: 14px; text-decoration: none; }
 .profile-actions .hint { color: #7C8785; font-size: 13px; }
 .back-link { display: inline-block; margin-top: 14px; color: var(--accent); font-size: 14px; }
+
+/* ------------------------------------------------------------- person switcher */
+/* Native <details>, so switching people needs no JavaScript. Every value below is an
+   existing token -- no new colours, no new fonts. */
+.chrome-left { display: flex; align-items: baseline; gap: 16px; }
+.person-switch { position: relative; font-size: 13px; }
+.person-switch summary { list-style: none; cursor: pointer; color: var(--accent); }
+.person-switch summary::-webkit-details-marker { display: none; }
+.caret { font-size: 10px; }
+.person-menu { position: absolute; top: calc(100% + 7px); left: 0; z-index: 20;
+  min-width: 190px; background: var(--paper); border: 1px solid var(--rule);
+  border-radius: 8px; padding: 6px; }
+.person-option { display: block; width: 100%; text-align: left; background: none; border: 0;
+  border-radius: 6px; padding: 8px 10px; font: inherit; font-size: 13px; color: var(--ink);
+  cursor: pointer; }
+.person-option:hover { background: var(--chrome); }
+.person-option.current { font-weight: 600; color: var(--accent); }
+.person-add { display: flex; gap: 6px; margin-top: 5px; padding-top: 6px;
+  border-top: 1px solid var(--rule); }
+.person-add .add { flex: 0 0 auto; background: var(--accent); color: var(--paper); width: auto; }
+.text-input { font: inherit; font-size: 13px; padding: 7px 10px; border: 1px solid var(--rule);
+  border-radius: 6px; background: var(--paper); width: 100%; min-width: 0; }
+.pick-button { margin-top: 16px; background: var(--accent); color: var(--paper); border: 0;
+  border-radius: 8px; padding: 12px 22px; font: inherit; font-size: 15px; cursor: pointer; }

@@ -6,6 +6,8 @@ never read or written.
 """
 
 import json
+import pathlib
+import shutil
 from pathlib import Path
 
 import pytest
@@ -334,12 +336,12 @@ def test_P21_the_rail_drops_resume_once_a_profile_exists(isolated_store, served,
     body = served.get("/?sha=abc").text
 
     assert ">Resume</a>" not in body and ">Resume</span>" not in body
-    assert 'rail-item active" href="/?sha=abc">Profile</a>' in body
+    assert f'href="/?person={PID}&sha=abc">Profile</a>' in body
 
 
 def test_P21_the_rail_offers_resume_when_there_is_no_profile(isolated_store, empty_disk):
     body = TestClient(app).get("/upload").text
-    assert 'href="/upload">Resume</a>' in body
+    assert f'href="/upload?person={PID}">Resume</a>' in body
 
 
 def test_P22_the_profile_offers_to_update_the_resume(isolated_store, served, monkeypatch):
@@ -347,7 +349,7 @@ def test_P22_the_profile_offers_to_update_the_resume(isolated_store, served, mon
 
     monkeypatch.setattr(main, "_newest_parse", lambda person: "abc")
     store.save_eeo(PID, EqualEmployment(answers={"pronouns": ["He/Him"]}))
-    assert 'href="/upload"' in served.get("/?sha=abc").text
+    assert f'href="/upload?person={PID}"' in served.get("/?sha=abc").text
 
 
 def test_P22_the_update_screen_can_be_left_without_uploading(isolated_store, monkeypatch):
@@ -434,4 +436,204 @@ def test_P27_the_rail_is_correct_even_if_the_flag_is_missing():
         sha="abc", active="profile", parse=None, provider="x"
     )
     assert ">Resume</a>" not in html
-    assert 'rail-item active" href="/?sha=abc">Profile</a>' in html
+    assert ">Profile</a>" in html          # a link, not the disabled span
+
+
+# ------------------------------------------------- P28-P38: one folder per person
+
+
+@pytest.fixture
+def legacy(tmp_path, monkeypatch):
+    """A tmp tree with a pre-people `data/profile.json` waiting to be migrated.
+
+    Its own subtree, because the autouse `isolated_store` already created a person and
+    migration correctly declines to run when people/ is non-empty.
+    """
+    root = tmp_path / "premigration"
+    monkeypatch.setattr(store, "PEOPLE", root / "people")
+    (root / "data").mkdir(parents=True)
+
+    def write(content: str) -> pathlib.Path:
+        path = root / "data" / "profile.json"
+        path.write_text(content, encoding="utf-8")
+        return path
+
+    return write
+
+
+def test_P28_the_legacy_profile_migrates_with_its_answers(legacy):
+    legacy(json.dumps({"answers": {"pronouns": ["He/Him"], "veteran": ["No"]}}))
+
+    people = store.list_people()
+
+    assert people == [("default", "Me")]
+    assert store.load_profile("default").eeo.selected("pronouns") == ["He/Him"]
+    assert store.active_person() == "default"
+
+
+def test_P29_migrating_twice_is_a_no_op(legacy):
+    path = legacy(json.dumps({"answers": {"veteran": ["No"]}}))
+    store.list_people()
+    written = (store.PEOPLE / "default" / "profile.json").read_bytes()
+
+    store.list_people()
+    store.active_person()
+
+    assert (store.PEOPLE / "default" / "profile.json").read_bytes() == written
+    assert len(store.list_people()) == 1
+    assert not path.exists()  # renamed once, not resurrected
+
+
+def test_P30_the_legacy_file_survives_until_the_new_one_validates(legacy):
+    """A migration that cannot be read back must leave the original exactly where it was."""
+    path = legacy("{not json")
+
+    store.list_people()
+
+    assert path.read_text() == "{not json"
+    assert not (store.PEOPLE / "default").exists()
+
+
+def test_P30_a_successful_migration_keeps_the_original_as_a_backup(legacy):
+    path = legacy(json.dumps({"answers": {"veteran": ["No"]}}))
+    store.list_people()
+    assert not path.exists()
+    assert path.with_name("profile.json.migrated").read_text()
+
+
+@pytest.mark.parametrize(
+    "hostile",
+    ["../../../etc/passwd", "..", "a/b", "a\\b", "", ".", "Alice", "al\x00i", "аli"],
+)
+def test_P31_a_person_id_cannot_escape_the_people_directory(isolated_store, hostile):
+    """person_id becomes a filesystem path, so it is validated on reads as well as writes."""
+    with pytest.raises(store.InvalidPersonId):
+        store.load_profile(hostile)
+    with pytest.raises(store.InvalidPersonId):
+        store.set_active_sha(hostile, "abc")
+    assert store.person_exists(hostile) is False
+
+
+def test_P31_a_hostile_person_param_is_a_404_and_creates_nothing(isolated_store):
+    before = sorted(p.name for p in store.PEOPLE.iterdir())
+
+    response = TestClient(app).get("/?person=../../../etc/passwd")
+
+    assert response.status_code == 404
+    assert sorted(p.name for p in store.PEOPLE.iterdir()) == before
+
+
+def test_P32_colliding_names_get_numbered(isolated_store):
+    ids = [store.create_person("Ali") for _ in range(3)]
+    assert ids == ["ali", "ali-2", "ali-3"]
+    assert [store.load_profile(i).display_name for i in ids] == ["Ali", "Ali", "Ali"]
+
+
+def test_P32_a_name_with_no_usable_characters_is_refused(isolated_store):
+    with pytest.raises(store.InvalidPersonId):
+        store.create_person("...")
+
+
+def test_P33_deleting_a_person_leaves_the_shared_parses_alone(isolated_store, tmp_path, monkeypatch):
+    """uploads/lines/parses are sha-keyed and shared -- another person may point at the same one."""
+    monkeypatch.setattr(pipeline, "PARSES", tmp_path / "parses")
+    monkeypatch.setattr(store, "PARSES", tmp_path / "parses")
+    (tmp_path / "parses").mkdir()
+    (tmp_path / "parses" / "abc.json").write_text("{}")
+    store.create_person("Ali")
+    store.create_person("Bea")
+    store.set_active_sha("bea", "abc")
+
+    orphaned = store.delete_person("ali")
+
+    assert not (store.PEOPLE / "ali").exists()
+    assert (store.PEOPLE / "bea").exists()
+    assert (tmp_path / "parses" / "abc.json").exists()   # still referenced by Bea
+    assert orphaned == 0
+
+
+def test_P33_a_parse_nobody_points_at_is_reported_not_deleted(isolated_store, tmp_path, monkeypatch):
+    monkeypatch.setattr(pipeline, "PARSES", tmp_path / "parses")
+    monkeypatch.setattr(store, "PARSES", tmp_path / "parses")
+    (tmp_path / "parses").mkdir()
+    (tmp_path / "parses" / "lonely.json").write_text("{}")
+    store.create_person("Ali")
+    store.set_active_sha("ali", "lonely")
+
+    orphaned = store.delete_person("ali")
+
+    assert orphaned == 1
+    assert (tmp_path / "parses" / "lonely.json").exists()  # reported, never removed
+
+
+def test_P34_deleting_the_active_person_clears_the_pointer(isolated_store):
+    store.create_person("Ali")
+    store.set_active_person("ali")
+
+    store.delete_person("ali")
+
+    assert store.active_person() is None
+
+
+def test_P34_the_landing_page_survives_deleting_the_active_person(isolated_store):
+    store.create_person("Ali")
+    store.set_active_person("ali")
+    store.delete_person("ali")
+
+    response = TestClient(app).get("/")
+
+    assert response.status_code == 200
+
+
+def test_P35_overrides_never_leak_between_people(isolated_store):
+    """Same resume, two people, two different corrections."""
+    store.create_person("Ali")
+    store.create_person("Bea")
+
+    store.set_overrides("ali", "abc", {"personal.name": "Ali Edited"})
+    store.set_overrides("bea", "abc", {"personal.name": "Bea Edited"})
+
+    assert store.get_overrides("ali", "abc")["personal.name"].value == "Ali Edited"
+    assert store.get_overrides("bea", "abc")["personal.name"].value == "Bea Edited"
+    assert "Bea Edited" not in (store.PEOPLE / "ali" / "profile.json").read_text()
+
+
+def test_P35_answers_never_leak_between_people(isolated_store):
+    store.create_person("Ali")
+    store.create_person("Bea")
+    store.save_eeo("ali", EqualEmployment(answers={"veteran": ["Yes"]}))
+
+    assert store.load_eeo("bea") is None
+
+
+@pytest.mark.parametrize("path", ["/", "/upload", "/eeo?sha=abc"])
+def test_P36_an_unknown_person_is_a_404_never_a_fallback(isolated_store, path):
+    """Exactly one person exists, so a buggy shortcut would be tempted to serve them."""
+    store.create_person("Ali")
+    joiner = "&" if "?" in path else "?"
+
+    response = TestClient(app).get(f"{path}{joiner}person=bob")
+
+    assert response.status_code == 404
+    assert "bob" in response.text
+
+
+def test_P37_zero_people_gets_the_create_screen_not_the_dropzone(isolated_store):
+    for entry in store.PEOPLE.iterdir():
+        shutil.rmtree(entry)
+
+    body = TestClient(app).get("/").text
+
+    assert "Create profile" in body
+    assert "Choose a file" not in body
+
+
+def test_P38_a_corrupt_person_file_reads_as_empty_and_is_not_overwritten(isolated_store):
+    store.create_person("Ali")
+    corrupt = store.PEOPLE / "ali" / "profile.json"
+    corrupt.write_text("{not json", encoding="utf-8")
+
+    loaded = store.load_profile("ali")
+
+    assert loaded.active_sha is None and loaded.eeo is None
+    assert corrupt.read_text() == "{not json"

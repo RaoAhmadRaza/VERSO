@@ -17,7 +17,7 @@
   </nav>
 
   <section class="panel active" data-panel="personal">
-    <form method="post" action="/profile/edit?sha={{ sha }}">
+    <form method="post" action="/profile/edit?person={{ person }}&sha={{ sha }}">
       <div class="panel-head">
         <h1 class="display name">{{ editable('personal', 'name', personal.name or 'Name not found', personal.overridden) }}</h1>
         <button type="button" class="edit-toggle">Edit</button>
@@ -38,7 +38,7 @@
 
   {% for key, entries in (('education', education), ('experience', experience)) %}
     <section class="panel" data-panel="{{ key }}">
-      <form method="post" action="/profile/edit?sha={{ sha }}">
+      <form method="post" action="/profile/edit?person={{ person }}&sha={{ sha }}">
         <div class="panel-head">
           <h2>{{ 'Education' if key == 'education' else 'Work Experience' }}</h2>
           <button type="button" class="edit-toggle">Edit</button>
@@ -82,7 +82,7 @@
   <section class="panel" data-panel="eeo">
     <div class="panel-head">
       <h2>Equal Employment</h2>
-      <a class="edit" href="/eeo?sha={{ sha }}">Edit</a>
+      <a class="edit" href="/eeo?person={{ person }}&sha={{ sha }}">Edit</a>
     </div>
     {% for question, picked in eeo_rows %}
       <div class="eeo-row">
@@ -93,7 +93,7 @@
   </section>
 
   <p class="profile-actions">
-    <a class="update-resume" href="/upload">Update resume</a>
+    <a class="update-resume" href="/upload?person={{ person }}">Update resume</a>
     <span class="hint">Uploading again replaces this profile and keeps your edits where the fields still exist.</span>
   </p>
 

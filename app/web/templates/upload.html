@@ -9,7 +9,7 @@
       <input type="file" id="file" accept=".pdf,.docx,.txt,.md" hidden>
       <span>Choose a file</span>
     </label>
-    {% if has_profile %}<a class="back-link" href="/">← Back to profile</a>{% endif %}
+    {% if has_profile %}<a class="back-link" href="/?person={{ person }}">← Back to profile</a>{% endif %}
     <p class="fineprint">Also accepts .txt and .md. Nothing leaves this machine except the resume text, once, to classify it.</p>
   </form>
 

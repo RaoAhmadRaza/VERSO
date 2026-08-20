@@ -22,9 +22,9 @@
      flag -- a stale server process, a route that forgets to pass it -- silently falls to the
      else branch and shows "Resume" on the profile page itself. #}
   {% if has_profile or sha %}
-    <a class="rail-item {{ 'active' if active == 'profile' }}" href="/{% if sha %}?sha={{ sha }}{% endif %}">Profile</a>
+    <a class="rail-item {{ 'active' if active == 'profile' }}" href="/?person={{ person }}{% if sha %}&sha={{ sha }}{% endif %}">Profile</a>
   {% else %}
-    <a class="rail-item {{ 'active' if active == 'resume' }}" href="/upload">Resume</a>
+    <a class="rail-item {{ 'active' if active == 'resume' }}" href="/upload?person={{ person }}">Resume</a>
     <span class="rail-item disabled" aria-disabled="true" title="No resume parsed yet">Profile</span>
   {% endif %}
   {% for name in ('Jobs', 'Agent', 'Coaching', 'Interview') %}
@@ -34,7 +34,27 @@
 
 <div class="shell">
 <header class="chrome-bar">
+  <div class="chrome-left">
   <span class="wordmark">VERSO</span>
+  {% if person %}
+    {# The entire multi-person mechanism: a folder picker with a nicer face. #}
+    <details class="person-switch">
+      <summary>Viewing as: {{ display_name or person }} <span class="caret">▾</span></summary>
+      <div class="person-menu">
+        {% for pid, name in people %}
+          <form method="post" action="/people/switch">
+            <input type="hidden" name="person_id" value="{{ pid }}">
+            <button type="submit" class="person-option {{ 'current' if pid == person }}">{{ name }}</button>
+          </form>
+        {% endfor %}
+        <form method="post" action="/people/create" class="person-add">
+          <input type="text" name="display_name" class="text-input" placeholder="Name" required autocomplete="off">
+          <button type="submit" class="person-option add">+ Add</button>
+        </form>
+      </div>
+    </details>
+  {% endif %}
+  </div>
   <span class="file-meta">
     {% if parse %}{{ parse.meta.filename }} · {{ parse.meta.pages }} page{{ '' if parse.meta.pages == 1 else 's' }} · {{ parse.meta.file_type }} · {% endif %}{{ provider }}
   </span>
