@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if parse %}{{ parse.meta.filename }} — VERSO{% else %}VERSO{% endif %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2314595C'/%3E%3Crect x='3' y='3' width='2' height='10' fill='%23E0A82E'/%3E%3C/svg%3E">
+</head>
+<body>
+
+{# Only Resume and Profile exist. The rest are features 2-4 and are inert on purpose --
+   a dead link that looks live is worse than one that says it is not built. #}
+<nav class="rail" aria-label="Sections">
+  <span class="rail-mark">V</span>
+  {# One profile, so once it exists there is no second destination. Uploading again updates
+     the profile in place and is reached from the profile itself, not from the rail. #}
+  {# `or sha`: a page rendering a sha has a profile by definition. Without it an undefined
+     flag -- a stale server process, a route that forgets to pass it -- silently falls to the
+     else branch and shows "Resume" on the profile page itself. #}
+  {% if has_profile or sha %}
+    <a class="rail-item {{ 'active' if active == 'profile' }}" href="/{% if sha %}?sha={{ sha }}{% endif %}">Profile</a>
+  {% else %}
+    <a class="rail-item {{ 'active' if active == 'resume' }}" href="/upload">Resume</a>
+    <span class="rail-item disabled" aria-disabled="true" title="No resume parsed yet">Profile</span>
+  {% endif %}
+  {% for name in ('Jobs', 'Agent', 'Coaching', 'Interview') %}
+    <span class="rail-item disabled" aria-disabled="true" title="Not built yet">{{ name }}</span>
+  {% endfor %}
+</nav>
+
+<div class="shell">
+<header class="chrome-bar">
+  <span class="wordmark">VERSO</span>
+  <span class="file-meta">
+    {% if parse %}{{ parse.meta.filename }} · {{ parse.meta.pages }} page{{ '' if parse.meta.pages == 1 else 's' }} · {{ parse.meta.file_type }} · {% endif %}{{ provider }}
+  </span>
+</header>
+
+{% block main %}{% endblock %}
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
