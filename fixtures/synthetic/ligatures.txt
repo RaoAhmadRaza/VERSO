@@ -1,0 +1,15 @@
+JANE MORGAN
+jane.morgan@example.com
+
+SUMMARY
+Engineer with a strong proﬁle in workﬂow automation and staﬀ mentoring.
+Speciali­sation in distributed​ systems.
+Holds a senior title.
+
+EXPERIENCE
+ Designed a high-through-
+put ingestion pipeline.
+• Cut p99 latency to 120ms.
+
+SKILLS
+Python, Go, Kubernetes

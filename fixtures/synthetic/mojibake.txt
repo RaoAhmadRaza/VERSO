@@ -1,0 +1,28 @@
+JANE MORGAN
+jane.morgan@example.com
++1 415 555 0199
+San Francisco, CA
+
+SUMMARY
+Senior backend engineer with eight years on payment systems.
+
+EXPERIENCE
+Senior Engineer
+Acme Corp â€“ San Francisco, CA
+Jan 2021 â€“ Present
+â€“ Built the billing pipeline handling 4M events per day.
+â€“ Cut p99 latency from 800ms to 120ms.
+
+Software Engineer
+Globex Inc â€“ Remote
+Jun 2018 â€“ Dec 2020
+â€“ Shipped the customer portal used by 30k accounts.
+
+EDUCATION
+BSc Computer Science
+University of Bristol
+2014 â€“ 2018
+GPA 3.8/4.0
+
+SKILLS
+Python, Go, PostgreSQL, Kubernetes, AWS, Terraform
