@@ -1,0 +1,43 @@
+{% extends "_layout.html" %}
+{% block main %}
+{# ---------------------------------------------------------------- empty state #}
+<main class="stage">
+  <form id="dropzone" class="dropzone" aria-label="Upload a resume">
+    <h1 class="display">{{ 'Update your resume.' if has_profile else 'Prove nothing was dropped.' }}</h1>
+    <p class="lede">Drop a PDF or DOCX. Single-column parses best.</p>
+    <label class="pick">
+      <input type="file" id="file" accept=".pdf,.docx,.txt,.md" hidden>
+      <span>Choose a file</span>
+    </label>
+    {% if has_profile %}<a class="back-link" href="/">← Back to profile</a>{% endif %}
+    <p class="fineprint">Also accepts .txt and .md. Nothing leaves this machine except the resume text, once, to classify it.</p>
+  </form>
+
+  <section id="processing" class="processing" hidden aria-live="polite">
+    <p class="parsing-file"><span id="parsing-name"></span><span id="parsing-size"></span><span>{{ provider }}</span></p>
+
+    <div class="track" role="progressbar" aria-label="Parsing progress"
+         aria-valuemin="0" aria-valuemax="100"><div class="fill" id="fill"></div></div>
+
+    <p class="clock">
+      <span id="elapsed" class="mono">0:00</span>
+      <span class="clock-sep">elapsed</span>
+      <span id="remaining" class="mono"></span>
+    </p>
+
+    <ol class="stages">
+      <li data-stage="extract">Extracting</li>
+      <li data-stage="structure">Structuring</li>
+      <li data-stage="verify">Verifying</li>
+    </ol>
+
+    <p class="fact" id="fact"></p>
+  </section>
+
+  <section id="failure" class="failure" hidden role="alert">
+    <h2>That didn't work</h2>
+    <p id="failure-message"></p>
+    <button type="button" id="retry">Try another file</button>
+  </section>
+</main>
+{% endblock %}

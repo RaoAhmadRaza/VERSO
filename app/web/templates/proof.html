@@ -1,0 +1,130 @@
+{% extends "_layout.html" %}
+{% block main %}
+{# ------------------------------------------------------------- the proof sheet #}
+<section class="scoreboard">
+  <div class="score">
+    <span class="display coverage-number">{{ '%.1f' | format(parse.coverage.coverage_pct) }}%</span>
+    <span class="score-label">coverage</span>
+  </div>
+  <div class="score">
+    <span class="display coverage-number">{{ '%.1f' | format(parse.coverage.represented_pct) }}%</span>
+    <span class="score-label">represented</span>
+  </div>
+  <div class="score">
+    <span class="score-value {{ 'warn' if parse.coverage.unassigned else '' }}">{{ parse.coverage.unassigned | length }}</span>
+    <span class="score-label">unassigned</span>
+  </div>
+  <div class="score">
+    <span class="score-value {{ 'flag' if parse.coverage.flagged else '' }}">{{ parse.coverage.flagged | length }}</span>
+    <span class="score-label">flagged</span>
+  </div>
+  <div class="score">
+    <span class="score-value">{{ parse.coverage.claimed_lines }}/{{ parse.coverage.non_blank_lines }}</span>
+    <span class="score-label">lines claimed</span>
+  </div>
+  <a class="reset" href="/upload">New file</a>
+</section>
+
+{% if parse.meta.warnings %}
+<ul class="warnings">
+  {% for warning in parse.meta.warnings %}
+    <li><strong>{{ warning.code.replace('_', ' ') }}</strong> — {{ warning.detail }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<main class="sheet">
+  <section class="pane source-pane" aria-label="Extracted source lines">
+    <div class="gutter" id="gutter" aria-hidden="true">
+      {% for state in gutter %}
+        <span class="bar {{ state }}" data-line="{{ loop.index }}" title="line {{ loop.index }} — {{ state }}"></span>
+      {% endfor %}
+    </div>
+    <ol class="source" id="source">
+      {% for line in lines %}
+        <li class="src-line" data-line="{{ line.no }}" id="L{{ line.no }}">
+          <span class="lineno">{{ '%03d' | format(line.no) }}</span>
+          <span class="linetext{{ ' bullet' if line.is_bullet }}{{ ' hidden-text' if line.hidden_text }}">{{ line.text }}</span>
+          {% if line.zone != 'body' or line.from_table or line.hidden_text or line.confidence == 'ocr' %}
+            <span class="tags">
+              {% if line.zone != 'body' %}<i>{{ line.zone }}</i>{% endif %}
+              {% if line.from_table %}<i>table</i>{% endif %}
+              {% if line.hidden_text %}<i>hidden</i>{% endif %}
+              {% if line.confidence == 'ocr' %}<i>ocr</i>{% endif %}
+            </span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <section class="pane parse-pane" aria-label="Structured parse">
+    {% if parse.coverage.unassigned %}
+      <article class="section unassigned-block">
+        <h2>Unassigned <span class="count">{{ parse.coverage.unassigned | length }}</span></h2>
+        <p class="section-note">These lines were extracted but no field claimed them.</p>
+        {% for no in parse.coverage.unassigned %}
+          <div class="row" data-lines="{{ no }}">
+            <span class="row-label mono">{{ '%03d' | format(no) }}</span>
+            <span class="row-value">{{ unassigned.get(no, '') }}</span>
+          </div>
+        {% endfor %}
+      </article>
+    {% endif %}
+
+    {% if parse.coverage.claimed_not_represented %}
+      <article class="section unassigned-block">
+        <h2>Claimed, not represented <span class="count">{{ parse.coverage.claimed_not_represented | length }}</span></h2>
+        <p class="section-note">A field cites these lines, but no verified span reproduces their text.</p>
+        {% for no in parse.coverage.claimed_not_represented %}
+          <div class="row" data-lines="{{ no }}">
+            <span class="row-label mono">{{ '%03d' | format(no) }}</span>
+            <span class="row-value">{{ claimed_not_represented.get(no, '') }}</span>
+          </div>
+        {% endfor %}
+      </article>
+    {% endif %}
+
+    {% if parse.meta.dropped_lines %}
+      <article class="section">
+        <h2>Dropped <span class="count">{{ parse.meta.dropped_lines | length }}</span></h2>
+        <p class="section-note">Removed on purpose. Listed so the removal is auditable.</p>
+        {% for dropped in parse.meta.dropped_lines %}
+          <div class="row">
+            <span class="row-label">{{ dropped.reason.replace('_', ' ') }}</span>
+            <span class="row-value">{{ dropped.text }}</span>
+          </div>
+        {% endfor %}
+      </article>
+    {% endif %}
+
+    {% for section in sections %}
+      <article class="section">
+        <h2>{{ section.title }}</h2>
+        {% for item in section.items %}
+          <div class="item">
+            {% if item.title %}
+              <h3 data-lines="{{ item.lines | join(',') }}">
+                {{ item.title }}
+                {% if item.subtitle %}<span class="subtitle">{{ item.subtitle }}</span>{% endif %}
+              </h3>
+            {% endif %}
+            {% for row in item.rows %}
+              {% if row.value %}
+                <div class="row {{ 'flagged' if row.flag == 'hallucinated' }}" data-lines="{{ row.lines | join(',') }}">
+                  {% if row.label %}<span class="row-label">{{ row.label }}</span>{% endif %}
+                  <span class="row-value">{{ row.value }}</span>
+                  {% if row.flag == 'hallucinated' %}
+                    <span class="row-flag" title="This text could not be found in the lines it cites.">unverified</span>
+                  {% endif %}
+                  {% if row.lines %}<span class="cite mono">⌐{{ row.lines | join(',') }}</span>{% endif %}
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </article>
+    {% endfor %}
+  </section>
+</main>
+{% endblock %}
