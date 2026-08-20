@@ -1,0 +1,25 @@
+{% extends "_layout.html" %}
+{% block main %}
+<main class="stage eeo-form-wrap">
+  <form class="eeo-form" method="post" action="/eeo?sha={{ sha }}">
+    <h1 class="display">Equal Employment</h1>
+    <p class="lede">Asked once, stored on this machine, reused for later uploads. Every question can be declined.</p>
+
+    {% for question in questions %}
+      <fieldset class="eeo-field">
+        <legend>{{ question.label }}</legend>
+        {% for option in question.options %}
+          <label class="opt">
+            <input type="{{ 'checkbox' if question.multi else 'radio' }}"
+                   name="{{ question.id }}" value="{{ option }}"
+                   {{ 'checked' if option in selected.get(question.id, []) }}>
+            <span>{{ option }}</span>
+          </label>
+        {% endfor %}
+      </fieldset>
+    {% endfor %}
+
+    <button type="submit" class="submit">Save and view profile</button>
+  </form>
+</main>
+{% endblock %}

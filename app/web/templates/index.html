@@ -1,0 +1,102 @@
+{% extends "_layout.html" %}
+{% block main %}
+{# ------------------------------------------------------------------- profile #}
+{% macro editable(path, name, value, edited) -%}
+  <span class="value{{ ' edited' if name in edited }}"
+        {% if name in edited %}title="Edited — not sourced from the resume"{% endif %}>{{ value }}</span>
+  <input class="edit-input" name="{{ path }}.{{ name }}" value="{{ value }}" autocomplete="off">
+{%- endmacro %}
+
+<section class="notice">Your profile data stays on this machine.</section>
+
+<main class="profile">
+  <nav class="tabs" role="tablist">
+    {% for key, label in tabs %}
+      <button class="tab {{ 'active' if loop.first }}" role="tab" data-tab="{{ key }}">{{ label }}</button>
+    {% endfor %}
+  </nav>
+
+  <section class="panel active" data-panel="personal">
+    <form method="post" action="/profile/edit?sha={{ sha }}">
+      <div class="panel-head">
+        <h1 class="display name">{{ editable('personal', 'name', personal.name or 'Name not found', personal.overridden) }}</h1>
+        <button type="button" class="edit-toggle">Edit</button>
+      </div>
+      {% if personal.name_confidence == 'low' %}
+        <p class="low-confidence">Name detected with low confidence — check it against the source.</p>
+      {% endif %}
+      <p class="field-row"><span class="field-label">Location</span>{{ editable('personal', 'location', personal.location, personal.overridden) }}</p>
+      <div class="chips contact">
+        {% for email in personal.emails %}<span class="chip">{{ email }}</span>{% endfor %}
+        {% for phone in personal.phones %}<span class="chip">{{ phone }}</span>{% endfor %}
+        {% for label, url in personal.links %}<span class="chip">{{ label }}: {{ url }}</span>{% endfor %}
+      </div>
+      <p class="summary">{{ editable('personal', 'summary', personal.summary, personal.overridden) }}</p>
+      <button type="submit" class="submit save">Save changes</button>
+    </form>
+  </section>
+
+  {% for key, entries in (('education', education), ('experience', experience)) %}
+    <section class="panel" data-panel="{{ key }}">
+      <form method="post" action="/profile/edit?sha={{ sha }}">
+        <div class="panel-head">
+          <h2>{{ 'Education' if key == 'education' else 'Work Experience' }}</h2>
+          <button type="button" class="edit-toggle">Edit</button>
+        </div>
+        {% for entry in entries %}
+          <article class="entry depth-{{ entry.depth }}">
+            <p class="when mono">
+              {{ editable(entry.path, 'start', entry.start, entry.overridden) }}
+              <span class="arrow">→</span>
+              {{ editable(entry.path, 'end', entry.end, entry.overridden) }}
+            </p>
+            <h3>{{ editable(entry.path, 'title', entry.title, entry.overridden) }}</h3>
+            <p class="entry-sub">{{ editable(entry.path, 'subtitle', entry.subtitle, entry.overridden) }}</p>
+            <p class="entry-detail">{{ editable(entry.path, 'detail', entry.detail, entry.overridden) }}</p>
+            {% if entry.bullets %}
+              <ul class="entry-bullets">
+                {% for bullet in entry.bullets %}<li>{{ bullet }}</li>{% endfor %}
+              </ul>
+            {% endif %}
+          </article>
+        {% else %}
+          <p class="empty-note">Nothing found in the resume for this section.</p>
+        {% endfor %}
+        <button type="submit" class="submit save">Save changes</button>
+      </form>
+    </section>
+  {% endfor %}
+
+  <section class="panel" data-panel="skills">
+    <h2>Skills</h2>
+    {% for group, names in skills %}
+      <h3 class="skill-group">{{ group }}</h3>
+      <div class="chips">
+        {% for name in names %}<span class="chip">{{ name }}</span>{% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-note">No skills found in the resume.</p>
+    {% endfor %}
+  </section>
+
+  <section class="panel" data-panel="eeo">
+    <div class="panel-head">
+      <h2>Equal Employment</h2>
+      <a class="edit" href="/eeo?sha={{ sha }}">Edit</a>
+    </div>
+    {% for question, picked in eeo_rows %}
+      <div class="eeo-row">
+        <span class="eeo-q">{{ question.label }}</span>
+        <span class="eeo-a">{% for choice in picked %}<span class="chip">{{ choice }}</span>{% else %}<span class="chip muted">Not answered</span>{% endfor %}</span>
+      </div>
+    {% endfor %}
+  </section>
+
+  <p class="profile-actions">
+    <a class="update-resume" href="/upload">Update resume</a>
+    <span class="hint">Uploading again replaces this profile and keeps your edits where the fields still exist.</span>
+  </p>
+
+  <p class="proof-link"><a href="/proof?sha={{ sha }}">Verify coverage — {{ '%.1f' | format(parse.coverage.coverage_pct) }}% claimed, {{ '%.1f' | format(parse.coverage.represented_pct) }}% represented →</a></p>
+</main>
+{% endblock %}
