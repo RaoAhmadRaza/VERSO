@@ -1,0 +1,13 @@
+{% extends "_layout.html" %}
+{% block main %}
+{# Zero people. A resume needs somewhere to go before it is uploaded. #}
+<main class="stage">
+  <form class="dropzone" method="post" action="/people/create">
+    <h1 class="display">Who is this profile for?</h1>
+    <p class="lede">VERSO keeps a separate resume, profile and answers for each person.</p>
+    <input type="text" name="display_name" class="text-input" placeholder="Full name" required autocomplete="off">
+    <button type="submit" class="pick-button"><span>Create profile</span></button>
+    <p class="fineprint">A person is a folder on this machine. No account, no password.</p>
+  </form>
+</main>
+{% endblock %}

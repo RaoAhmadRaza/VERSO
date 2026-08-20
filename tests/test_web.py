@@ -10,11 +10,12 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app import pipeline
+from app import pipeline, store
 from app.main import app
 
 PROBES = Path(__file__).parent.parent / "fixtures" / "synthetic"
 FIXTURE = PROBES / "header_contact.pdf"
+PID = "test-person"
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -28,10 +29,12 @@ def isolated_store(tmp_path_factory):
     """
     from app import store
 
-    original = store.PROFILE
-    store.PROFILE = tmp_path_factory.mktemp("store") / "profile.json"
-    yield store.PROFILE
-    store.PROFILE = original
+    original = store.PEOPLE
+    store.PEOPLE = tmp_path_factory.mktemp("store") / "people"
+    (store.PEOPLE / PID).mkdir(parents=True)
+    store.set_active_person(PID)
+    yield store.PEOPLE
+    store.PEOPLE = original
 
 
 @pytest.fixture(scope="module")

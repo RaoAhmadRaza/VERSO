@@ -290,6 +290,9 @@ class ProfileStore(BaseModel):
     model_config = {"extra": "ignore"}
 
     version: int = 1
+    # Defaulted, like every field here: a per-person file written before this existed must
+    # still load. Required-with-no-default broke every file on disk once already (Coverage).
+    display_name: str = "Me"
     active_sha: str | None = None
     eeo: EqualEmployment | None = None
     # sha -> json path into that parse -> the edit. Keyed by sha first so switching resumes

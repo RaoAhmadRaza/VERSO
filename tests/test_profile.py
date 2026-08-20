@@ -25,11 +25,15 @@ from app.models import (
 from app.web import profile
 
 
+PID = "test-person"
+
+
 @pytest.fixture
 def isolated_store(tmp_path, monkeypatch):
-    """Never touch the real data/profile.json."""
-    monkeypatch.setattr(store, "PROFILE", tmp_path / "profile.json")
-    return store.PROFILE
+    """Never touch the real people/ tree."""
+    monkeypatch.setattr(store, "PEOPLE", tmp_path / "people")
+    (tmp_path / "people" / PID).mkdir(parents=True)
+    return tmp_path / "people" / PID / "profile.json"
 
 
 def _parse() -> ParsedResume:
@@ -100,14 +104,14 @@ def test_unknown_question_is_rejected():
 
 
 def test_store_round_trips(isolated_store):
-    assert store.load_eeo() is None
-    store.save_eeo(EqualEmployment(answers={"pronouns": ["He/Him"]}))
-    assert store.load_eeo().selected("pronouns") == ["He/Him"]
+    assert store.load_eeo(PID) is None
+    store.save_eeo(PID, EqualEmployment(answers={"pronouns": ["He/Him"]}))
+    assert store.load_eeo(PID).selected("pronouns") == ["He/Him"]
 
 
 def test_stored_answers_are_readable_json(isolated_store):
     """Answers now live under `eeo` -- profile.json carries active_sha and overrides too."""
-    store.save_eeo(EqualEmployment(answers={"veteran": [eeo.DECLINE]}))
+    store.save_eeo(PID, EqualEmployment(answers={"veteran": [eeo.DECLINE]}))
     written = json.loads(isolated_store.read_text())
     assert written["eeo"]["answers"]["veteran"] == [eeo.DECLINE]
 
@@ -142,20 +146,18 @@ def test_profile_is_not_shown_before_the_questions_are_answered(isolated_store, 
     """`store` is imported into main, so patch the name main actually calls."""
     from app import main
 
-    monkeypatch.setattr(main.store, "PROFILE", isolated_store)
     monkeypatch.setattr(main, "_load", lambda sha: (_parse(), []))
     client = TestClient(app)
     response = client.get("/?sha=abc", follow_redirects=False)
     assert response.status_code == 303
-    assert response.headers["location"] == "/eeo?sha=abc"
+    assert response.headers["location"] == f"/eeo?person={PID}&sha=abc"
 
 
 def test_profile_renders_once_the_questions_are_answered(isolated_store, monkeypatch):
     from app import main
 
-    monkeypatch.setattr(main.store, "PROFILE", isolated_store)
     monkeypatch.setattr(main, "_load", lambda sha: (_parse(), []))
-    store.save_eeo(EqualEmployment(answers={"pronouns": ["He/Him"]}))
+    store.save_eeo(PID, EqualEmployment(answers={"pronouns": ["He/Him"]}))
     body = TestClient(app).get("/?sha=abc").text
     assert "Ada Lovelace" in body
     assert "Equal Employment" in body
@@ -175,5 +177,5 @@ def test_the_dropzone_lives_at_its_own_url():
 def test_rail_marks_unbuilt_sections_as_disabled():
     """A dead link that looks live is worse than one that says it is not built."""
     body = TestClient(app).get("/").text
-    assert body.count('rail-item disabled') == 4
-    assert "Jobs" in body and "Coaching" in body
+    for section in ("Jobs", "Agent", "Coaching", "Interview"):
+        assert f'aria-disabled="true" title="Not built yet">{section}<' in body
